@@ -1,8 +1,7 @@
 table! {
-    stockprice (id) {
-        id -> Text,
-        name -> Text,
+    stockprice (symbol) {
         symbol -> Text,
+        name -> Text,
         price -> Text,
     }
 }

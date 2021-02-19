@@ -1,7 +1,7 @@
 mod models;
 mod schema;
 
-use uuid::Uuid;
+use crate::models::StockPrice;
 use serde::{Deserialize};
 use self::diesel::prelude::*;
 
@@ -38,7 +38,6 @@ struct Row {
 extern crate diesel;
 extern crate dotenv;
 
-use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
 use std::env;
@@ -62,17 +61,28 @@ async fn main() -> reqwest::Result<()> {
     let connection = establish_connection();
 
     body.data.table.rows.into_iter().for_each(|record| {
-        let new_stock_price = NewStockPrice{
-            id: &Uuid::new_v4().to_hyphenated().to_string(),
-            name: &record.name,
-            symbol: &record.symbol,
-            price: &record.lastsale,
-        };
-    
-        diesel::insert_into(stockprice::table)
-            .values(&new_stock_price)
-            .execute(&connection)
-            .expect("Error saving new post");
+        let results = stockprice::table.filter(schema::stockprice::dsl::symbol.eq(&record.symbol))
+            .load::<StockPrice>(&connection)
+            .expect("Error loading stock prices");
+        
+        if results.len() == 0 {
+            let new_stock_price = NewStockPrice{
+                name: &record.name,
+                symbol: &record.symbol,
+                price: &record.lastsale,
+            };
+        
+            diesel::insert_into(stockprice::table)
+                .values(&new_stock_price)
+                .execute(&connection)
+                .expect("Error saving new stock price");
+
+        } else {
+            diesel::update(stockprice::table.filter(schema::stockprice::dsl::symbol.eq(&record.symbol)))
+                .set(schema::stockprice::dsl::price.eq(&record.lastsale))
+                .execute(&connection)
+                .expect("Error updating stock price in db");
+        }
     
     });
 
