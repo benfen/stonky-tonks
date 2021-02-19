@@ -64,12 +64,14 @@ async fn main() -> reqwest::Result<()> {
         let results = stockprice::table.filter(schema::stockprice::dsl::symbol.eq(&record.symbol))
             .load::<StockPrice>(&connection)
             .expect("Error loading stock prices");
+
+        let price: i32 = record.lastsale[1..].replace(&['$', '.'][..], "").parse().unwrap();
         
         if results.len() == 0 {
             let new_stock_price = NewStockPrice{
                 name: &record.name,
                 symbol: &record.symbol,
-                price: &record.lastsale,
+                price: price,
             };
         
             diesel::insert_into(stockprice::table)
@@ -79,7 +81,7 @@ async fn main() -> reqwest::Result<()> {
 
         } else {
             diesel::update(stockprice::table.filter(schema::stockprice::dsl::symbol.eq(&record.symbol)))
-                .set(schema::stockprice::dsl::price.eq(&record.lastsale))
+                .set(schema::stockprice::dsl::price.eq(price))
                 .execute(&connection)
                 .expect("Error updating stock price in db");
         }
