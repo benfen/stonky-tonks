@@ -1,16 +1,22 @@
-use actix_web::{web, App, HttpRequest, HttpServer, Responder};
+use actix_web::{ get, HttpResponse, Result };
+use db::{ establish_connection, StockPrice };
 
-async fn greet(req: HttpRequest) -> impl Responder {
-    let name = req.match_info().get("name").unwrap_or("World");
-    format!("Hello {}!", &name)
+#[get("/prices")]
+async fn index() -> Result<HttpResponse> {
+    let connection = establish_connection();
+
+    let prices = StockPrice::retrieve(&connection);
+
+    Ok(HttpResponse::Ok().json(prices))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use actix_web::{App, HttpServer};
+
     HttpServer::new(|| {
         App::new()
-            .route("/", web::get().to(greet))
-            .route("/{name}", web::get().to(greet))
+            .service(index)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
