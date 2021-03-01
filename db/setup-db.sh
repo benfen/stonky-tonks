@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# diesel migration generate
+
 basedir=$(dirname "$0")
 
 (
