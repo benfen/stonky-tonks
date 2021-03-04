@@ -1,7 +1,9 @@
-mod models;
+mod stockprice_models;
+mod user_models;
 mod schema;
 
-pub use models::*;
+pub use stockprice_models::*;
+pub use user_models::*;
 pub use schema::*;
 
 #[macro_use]
