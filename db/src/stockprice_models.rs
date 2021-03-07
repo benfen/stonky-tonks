@@ -21,7 +21,15 @@ pub struct NewStockPrice<'a> {
 }
 
 impl StockPrice {
-    pub fn retrieve(connection: &SqliteConnection) -> Vec<StockPrice> {
+    pub fn retrieve_price(connection: &SqliteConnection, search_symbol: &str) -> Option<StockPrice> {
+        stockprice::table.select((name, symbol, price))
+            .filter(symbol.eq(search_symbol))
+            .first(connection)
+            .optional()
+            .expect("Error loading user from table")
+    }
+
+    pub fn retrieve_all(connection: &SqliteConnection) -> Vec<StockPrice> {
         stockprice::table.select((name, symbol, price))
             .load(connection)
             .expect("Error loading stock prices")
