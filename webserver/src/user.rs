@@ -8,8 +8,7 @@ use qstring::QString;
 
 #[derive(Debug, Serialize)]
 struct UserInfo {
-    user: Option<User>,
-    username: String,
+    user: Option<User>
 }
 
 impl FromRequest for UserInfo {
@@ -21,13 +20,12 @@ impl FromRequest for UserInfo {
         let query_string = req.query_string();
         let parsed_query_string = QString::from(query_string);
         let connection = establish_connection();
-        let username = parsed_query_string.get("username").unwrap_or("").to_string();
-        let user = User::retrieve_user(&connection, &username);
+        let username = parsed_query_string.get("username").unwrap_or("");
+        let user = User::retrieve_user(&connection, username);
 
         Box::pin(async move {
             Ok(UserInfo {
-                user,
-                username
+                user
             })
         })
     }
@@ -40,12 +38,14 @@ pub fn user_service(path: &str) -> Scope {
         .service(post_user)
 }
 
-#[get("/user")]
-async fn get_user(user: UserInfo) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::Ok().json(user))
+#[get("/get/{username}")]
+async fn get_user(username: web::Path<String>) -> Result<HttpResponse, Error> {
+    let connection = establish_connection();
+
+    Ok(HttpResponse::Ok().json(User::retrieve_user(&connection, &username.into_inner())))
 }
 
-#[get("/users")]
+#[get("/list")]
 async fn get_users() -> Result<HttpResponse, Error> {
     let connection = establish_connection();
 
@@ -54,13 +54,22 @@ async fn get_users() -> Result<HttpResponse, Error> {
     ))
 }
 
-#[post("/user")]
-async fn post_user(user: UserInfo) -> Result<HttpResponse, Error> {
-    if user.username.is_empty() {
-        Err(error::ErrorBadRequest("no username provided"))
+#[post("/create/{username}")]
+async fn post_user(username: web::Path<String>) -> Result<HttpResponse, Error> {
+    let name = username.into_inner();
+    if name.is_empty() {
+        return Err(error::ErrorBadRequest("No username provided"));
+    }
+
+    let connection = establish_connection();
+
+    let user = User::retrieve_user(&connection, &name);
+
+    if user.is_some() {
+        Err(error::ErrorBadRequest("Username already exists"))
     } else {
         let connection = establish_connection();
-        NewUser::insert_user(&user.username, 10000000, &connection);
+        NewUser::insert_user(&name, 10000000, &connection);
         Ok(HttpResponse::Ok().finish())
     }
 }
