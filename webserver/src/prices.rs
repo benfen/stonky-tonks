@@ -1,5 +1,6 @@
 use actix_web::{Error, HttpResponse, Scope, get, web };
-use db::{establish_connection, StockPrice};
+use db::establish_connection;
+use db::price::StockPrice;
 
 pub fn price_service(path: &str) -> Scope {
     web::scope(path)

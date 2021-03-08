@@ -1,5 +1,6 @@
 use actix_web::{Error, HttpResponse, FromRequest, HttpRequest, Scope, error, get, post, web };
-use db::{establish_connection, User, NewUser};
+use db::establish_connection;
+use db::user::{ User, NewUser };
 use serde::{ Serialize };
 use std::pin::Pin;
 use std::future::Future;

@@ -2,9 +2,13 @@ mod stockprice_models;
 mod user_models;
 mod schema;
 
-pub use stockprice_models::*;
-pub use user_models::*;
-pub use schema::*;
+pub mod price {
+    pub use crate::stockprice_models::*;
+}
+
+pub mod user {
+    pub use crate::user_models::*;
+}
 
 #[macro_use]
 extern crate diesel;
