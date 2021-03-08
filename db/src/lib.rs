@@ -1,3 +1,4 @@
+mod holdings_models;
 mod stockprice_models;
 mod user_models;
 mod schema;
@@ -8,6 +9,10 @@ pub mod price {
 
 pub mod user {
     pub use crate::user_models::*;
+}
+
+pub mod holdings {
+    pub use crate::holdings_models::*;
 }
 
 #[macro_use]

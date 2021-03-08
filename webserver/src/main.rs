@@ -1,3 +1,4 @@
+mod holdings;
 mod prices;
 mod user;
 
@@ -9,6 +10,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(prices::price_service("/prices"))
             .service(user::user_service("/user"))
+            .service(holdings::holdings_service("/holdings"))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

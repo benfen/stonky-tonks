@@ -8,8 +8,14 @@ use actix_web::dev::Payload;
 use qstring::QString;
 
 #[derive(Debug, Serialize)]
-struct UserInfo {
+pub struct UserInfo {
     user: Option<User>
+}
+
+impl UserInfo {
+    pub fn get_user(&self) -> Option<&User> {
+        self.user.as_ref()
+    }
 }
 
 impl FromRequest for UserInfo {

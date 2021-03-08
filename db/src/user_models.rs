@@ -6,7 +6,9 @@ use ::uuid::Uuid;
 use super::schema::user::dsl::*;
 use super::schema::user;
 
-#[derive(Debug, Deserialize, Queryable, Serialize)]
+#[derive(Debug, Deserialize, Identifiable, Queryable, Serialize)]
+#[table_name="user"]
+#[primary_key(uuid)]
 pub struct User {
     pub name: String,
     pub capital: i32,

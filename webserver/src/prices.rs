@@ -8,7 +8,7 @@ pub fn price_service(path: &str) -> Scope {
         .service(get_price)
 }
 
-#[get("/")]
+#[get("")]
 async fn get_prices() -> Result<HttpResponse, Error> {
     let connection = establish_connection();
 
