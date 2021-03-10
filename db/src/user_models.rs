@@ -8,11 +8,10 @@ use super::schema::user;
 
 #[derive(Debug, Deserialize, Identifiable, Queryable, Serialize)]
 #[table_name="user"]
-#[primary_key(uuid)]
 pub struct User {
     pub name: String,
     pub capital: i64,
-    pub uuid: String,
+    pub id: String,
 }
 
 #[derive(Debug, Insertable)]

@@ -3,6 +3,7 @@ table! {
         id -> Text,
         userid -> Text,
         stockid -> Text,
+        quantity -> Integer,
     }
 }
 
