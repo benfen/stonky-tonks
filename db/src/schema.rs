@@ -1,6 +1,6 @@
 table! {
-    stockholdings (uuid) {
-        uuid -> Text,
+    stockholdings (id) {
+        id -> Text,
         userid -> Text,
         stockid -> Text,
     }
@@ -15,8 +15,8 @@ table! {
 }
 
 table! {
-    user (uuid) {
-        uuid -> Text,
+    user (id) {
+        id -> Text,
         name -> Text,
         capital -> BigInt,
     }

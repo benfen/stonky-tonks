@@ -20,12 +20,12 @@ pub struct User {
 pub struct NewUser<'a> {
     pub name: &'a str,
     pub capital: i64,
-    pub uuid: &'a str,
+    pub id: &'a str,
 }
 
 impl User {
     pub fn retrieve_user(connection: &SqliteConnection, search_name: &str) -> Option<User> {
-        user::table.select((name, capital, uuid))
+        user::table.select((name, capital, id))
             .filter(name.eq(search_name))
             .first(connection)
             .optional()
@@ -33,7 +33,7 @@ impl User {
     }
 
     pub fn retrieve_all_users(connection: &SqliteConnection) -> Vec<User> {
-        user::table.select((name, capital, uuid))
+        user::table.select((name, capital, id))
             .load(connection)
             .expect("Error loading users from table")
     }
@@ -46,7 +46,7 @@ impl <'a> NewUser<'a> {
         let new_user = NewUser {
             name: new_name,
             capital: new_capital,
-            uuid: &new_uuid
+            id: &new_uuid
         };
 
         diesel::insert_into(user::table)
@@ -58,7 +58,7 @@ impl <'a> NewUser<'a> {
     }
 
     pub fn update_capital(&self, connection: &SqliteConnection) {
-        diesel::update(user::table.filter(uuid.eq(self.uuid)))
+        diesel::update(user::table.filter(id.eq(self.id)))
             .set(capital.eq(self.capital))
             .execute(connection)
             .expect("Error updating captial for user");

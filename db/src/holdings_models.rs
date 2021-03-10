@@ -8,10 +8,9 @@ use super::schema::stockholdings;
 
 #[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
 #[table_name="stockholdings"]
-#[primary_key(uuid)]
 #[belongs_to(User, foreign_key="userid")]
 pub struct StockHolding {
-    pub uuid: String,
+    pub id: String,
     pub userid: String,
     pub stockid: String,
 }
