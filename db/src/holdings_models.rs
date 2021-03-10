@@ -20,7 +20,7 @@ pub struct StockHolding {
 #[derive(Debug, Identifiable, Insertable)]
 #[table_name="stockholdings"]
 pub struct ModStockHoldings<'a> {
-    id: String,
+    id: &'a str,
     pub userid: &'a str,
     pub stockid: &'a str,
     pub quantity: i32,
@@ -36,11 +36,11 @@ impl StockHolding {
 
 impl<'a> ModStockHoldings<'a> {
 
-    pub fn create_new_holding(user: &'a User, ticker: &'a str, quantity: i32, connection: &SqliteConnection) -> Self {
+    pub fn create_new_holding(user: &'a User, ticker: &'a str, quantity: i32, connection: &SqliteConnection) -> String {
         let new_id = Uuid::new_v4().to_hyphenated().to_string();
         
         let new_holding = ModStockHoldings {
-            id: new_id,
+            id: &new_id,
             userid: &user.id,
             stockid: ticker,
             quantity,
@@ -51,7 +51,7 @@ impl<'a> ModStockHoldings<'a> {
             .execute(connection)
             .expect("Error creating stock holding");
 
-        new_holding
+        new_id
     }
 
     pub fn update_quantity(&self, new_quantity: i32, connection: &SqliteConnection) {

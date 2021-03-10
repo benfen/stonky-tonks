@@ -6,7 +6,7 @@ use ::uuid::Uuid;
 use super::schema::user::dsl::*;
 use super::schema::user;
 
-#[derive(Debug, Deserialize, Identifiable, Queryable, Serialize)]
+#[derive(Debug, Deserialize, Identifiable, Insertable, Queryable, Serialize)]
 #[table_name="user"]
 pub struct User {
     pub name: String,
@@ -36,6 +36,13 @@ impl User {
             .load(connection)
             .expect("Error loading users from table")
     }
+
+    pub fn update_capital(&self, new_capital: i64,connection: &SqliteConnection) {
+        diesel::update(self)
+            .set(capital.eq(new_capital))
+            .execute(connection)
+            .expect("Error updating captial for user");
+    }
 }
 
 impl <'a> NewUser<'a> {
@@ -54,13 +61,6 @@ impl <'a> NewUser<'a> {
             .expect("Error creating new user");
 
         new_uuid
-    }
-
-    pub fn update_capital(&self, connection: &SqliteConnection) {
-        diesel::update(user::table.filter(id.eq(self.id)))
-            .set(capital.eq(self.capital))
-            .execute(connection)
-            .expect("Error updating captial for user");
     }
 }
 
