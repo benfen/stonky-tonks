@@ -11,7 +11,7 @@ use super::schema::user;
 #[primary_key(uuid)]
 pub struct User {
     pub name: String,
-    pub capital: i32,
+    pub capital: i64,
     pub uuid: String,
 }
 
@@ -19,7 +19,7 @@ pub struct User {
 #[table_name="user"]
 pub struct NewUser<'a> {
     pub name: &'a str,
-    pub capital: i32,
+    pub capital: i64,
     pub uuid: &'a str,
 }
 
@@ -41,7 +41,7 @@ impl User {
 
 impl <'a> NewUser<'a> {
 
-    pub fn insert_user(new_name: &str, new_capital: i32, connection: &SqliteConnection) -> String {
+    pub fn insert_user(new_name: &str, new_capital: i64, connection: &SqliteConnection) -> String {
         let new_uuid = Uuid::new_v4().to_hyphenated().to_string();
         let new_user = NewUser {
             name: new_name,

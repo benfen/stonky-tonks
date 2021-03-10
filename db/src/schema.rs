@@ -18,7 +18,7 @@ table! {
     user (uuid) {
         uuid -> Text,
         name -> Text,
-        capital -> Integer,
+        capital -> BigInt,
     }
 }
 
