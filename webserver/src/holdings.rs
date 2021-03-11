@@ -1,5 +1,6 @@
-use actix_web::{Error, HttpResponse, Scope, get, post, web };
-use actix_web::error::{ ErrorBadRequest, ErrorUnauthorized };
+use actix_web::{ Error, HttpResponse, Scope, get, post, web };
+use actix_web::error::{ ErrorBadRequest };
+use actix_web::http::StatusCode;
 use db::{ establish_connection, perform_transation };
 use db::holdings::{ ModStockHoldings, StockHolding};
 use db::price::{ StockPrice };
@@ -10,57 +11,92 @@ use crate::user::UserInfo;
 #[derive(Debug, Deserialize, Serialize)]
 struct Holding {
     ticker: String,
-    quantity: i32,
+    quantity: u32,
 }
 
 pub fn holdings_service(path: &str) -> Scope {
     web::scope(path)
         .service(get_holdings)
         .service(create_holding)
+        .service(sell_holding)
 }
 
 #[get("")]
 async fn get_holdings(user_info: UserInfo) -> Result<HttpResponse, Error> {
-    if let Some(user) = user_info.get_user() {
-        let connection = establish_connection();
+    let user = user_info.get_user();
+    let connection = establish_connection();
 
-        let holdings = StockHolding::retrieve_holdings(&connection, user);
+    let holdings = StockHolding::retrieve_all_holdings(&connection, user);
 
-        Ok(HttpResponse::Ok().json(holdings))
+    Ok(HttpResponse::Ok().json(holdings))
+}
+
+#[post("/buy")]
+async fn create_holding(user_info: UserInfo, new_holding: web::Json<Holding>) -> Result<HttpResponse, Error> {
+    let user = user_info.get_user();
+    let connection = establish_connection();
+
+    let price_option = StockPrice::retrieve_price(&connection, &new_holding.ticker);
+
+    if let Some(price) = price_option {
+        let cost = (price.price as i64) * (new_holding.quantity as i64);
+
+        if cost > user.capital {
+            Err(ErrorBadRequest("Purchase request exceeds available capital"))
+        } else {
+            let existing_holding_opt = StockHolding::retrieve_holding(&connection, &user, &new_holding.ticker);
+
+            if let Some(existing_holding) = existing_holding_opt {
+                perform_transation::<(), _>(&connection, || {
+                    user.update_capital(user.capital - cost, &connection);
+
+                    ModStockHoldings::update_quantity(&existing_holding, existing_holding.get_quantity() + new_holding.quantity, &connection);
+                    Ok(())
+                }).unwrap();
+            } else {
+                perform_transation::<ModStockHoldings, _>(&connection, || {
+                    user.update_capital(user.capital - cost, &connection);
+    
+                    Ok(ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection))
+                }).unwrap();
+            }
+
+            Ok(HttpResponse::Ok().status(StatusCode::NO_CONTENT).finish())
+        }
     } else {
-        Err(ErrorUnauthorized("User required for request"))
+        Err(ErrorBadRequest(format!("Stock ticker does not exist: {}", &new_holding.ticker)))
     }
 }
 
-#[post("/create")]
-async fn create_holding(user_info: UserInfo, new_holding: web::Json<Holding>) -> Result<HttpResponse, Error> {
-    if let Some(user) = user_info.get_user() {
-        let connection = establish_connection();
+#[post("/sell")]
+async fn sell_holding(user_info: UserInfo, holding: web::Json<Holding>) -> Result<HttpResponse, Error> {
+    let user = user_info.get_user();
+    let connection = establish_connection();
 
-        let price_option = StockPrice::retrieve_price(&connection, &new_holding.ticker);
+    let price_option = StockPrice::retrieve_price(&connection, &holding.ticker);
 
-        if let Some(price) = price_option {
-            let cost = (price.price as i64) * (new_holding.quantity as i64);
+    if let Some(price) = price_option {
+        let cost = (price.price as i64) * (holding.quantity as i64);
 
-            if cost > user.capital {
-                Err(ErrorBadRequest("Purchase request exceeds available capital"))
-            } else {
-                let holding = perform_transation::<String, _>(&connection, || {
-                    user.update_capital(user.capital - cost, &connection);
+        let existing_holding_opt = StockHolding::retrieve_holding(&connection, &user, &holding.ticker);
 
-                    Ok(ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection))
+        if let Some(existing_holding) = existing_holding_opt {
+            if existing_holding.get_quantity() >= holding.quantity {
+                perform_transation::<(), _>(&connection, || {
+                    user.update_capital(user.capital + cost, &connection);
+
+                    ModStockHoldings::update_quantity(&existing_holding, existing_holding.get_quantity() - holding.quantity, &connection);
+                    Ok(())
                 }).unwrap();
-    
-                Ok(HttpResponse::Ok().json(holding))
+
+                Ok(HttpResponse::Ok().status(StatusCode::NO_CONTENT).finish())
+            } else {
+                Err(ErrorBadRequest("User does not own enough stock to make this transaction"))
             }
         } else {
-            Err(ErrorBadRequest(format!("Stock ticker does not exist: {}", &new_holding.ticker)))
+            Err(ErrorBadRequest("User does not own enough stock to make this transaction"))
         }
-
-        // let holding = ModStockHoldings::create_new_holding(user, &holding.ticker, holding.quantity, &connection);
-
-        // Ok(HttpResponse::Ok().json(holding))
     } else {
-        Err(ErrorUnauthorized("User required for request"))
+        Err(ErrorBadRequest(format!("Stock ticker does not exist: {}", &holding.ticker)))
     }
 }

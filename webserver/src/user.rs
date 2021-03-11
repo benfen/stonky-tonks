@@ -1,4 +1,5 @@
 use actix_web::{Error, HttpResponse, FromRequest, HttpRequest, Scope, error, get, post, web };
+use actix_web::error::ErrorUnauthorized;
 use db::establish_connection;
 use db::user::{ User, NewUser };
 use serde::{ Serialize };
@@ -9,12 +10,12 @@ use qstring::QString;
 
 #[derive(Debug, Serialize)]
 pub struct UserInfo {
-    user: Option<User>
+    user: User
 }
 
 impl UserInfo {
-    pub fn get_user(&self) -> Option<&User> {
-        self.user.as_ref()
+    pub fn get_user(&self) -> &User {
+        &self.user
     }
 }
 
@@ -28,13 +29,19 @@ impl FromRequest for UserInfo {
         let parsed_query_string = QString::from(query_string);
         let connection = establish_connection();
         let username = parsed_query_string.get("username").unwrap_or("");
-        let user = User::retrieve_user(&connection, username);
+        let user_option = User::retrieve_user(&connection, username);
 
-        Box::pin(async move {
-            Ok(UserInfo {
-                user
+        if let Some(user) = user_option {
+            Box::pin(async move {
+                Ok(UserInfo {
+                    user
+                })
             })
-        })
+        } else {
+            Box::pin(async move {
+                Err(ErrorUnauthorized("User required for request"))
+            })
+        }
     }
 }
 

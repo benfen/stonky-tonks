@@ -1,6 +1,5 @@
 table! {
-    stockholdings (id) {
-        id -> Text,
+    stockholdings (userid, stockid) {
         userid -> Text,
         stockid -> Text,
         quantity -> Integer,
@@ -24,7 +23,6 @@ table! {
 }
 
 joinable!(stockholdings -> stockprice (stockid));
-joinable!(stockholdings -> user (userid));
 
 allow_tables_to_appear_in_same_query!(
     stockholdings,
