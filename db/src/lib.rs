@@ -19,6 +19,7 @@ pub mod holdings {
 extern crate diesel;
 extern crate dotenv;
 
+use diesel::result::Error;
 use self::diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
@@ -31,4 +32,9 @@ pub fn establish_connection() -> SqliteConnection {
         .expect("DATABASE_URL must be set");
     SqliteConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
+}
+
+pub fn perform_transation<T, F>(connection: &SqliteConnection, f: F) -> Result<T, Error>
+        where F: FnOnce() -> Result<T, Error> {
+    connection.transaction(f)
 }

@@ -1,6 +1,6 @@
 use actix_web::{Error, HttpResponse, Scope, get, post, web };
 use actix_web::error::{ ErrorBadRequest, ErrorUnauthorized };
-use db::establish_connection;
+use db::{ establish_connection, perform_transation };
 use db::holdings::{ ModStockHoldings, StockHolding};
 use db::price::{ StockPrice };
 use serde::{ Deserialize, Serialize };
@@ -45,9 +45,11 @@ async fn create_holding(user_info: UserInfo, new_holding: web::Json<Holding>) ->
             if cost > user.capital {
                 Err(ErrorBadRequest("Purchase request exceeds available capital"))
             } else {
-                user.update_capital(user.capital - cost, &connection);
+                let holding = perform_transation::<String, _>(&connection, || {
+                    user.update_capital(user.capital - cost, &connection);
 
-                let holding = ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection);
+                    Ok(ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection))
+                }).unwrap();
     
                 Ok(HttpResponse::Ok().json(holding))
             }
