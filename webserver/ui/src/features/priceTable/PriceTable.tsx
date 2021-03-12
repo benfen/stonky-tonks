@@ -133,7 +133,7 @@ export function PriceTable() {
                 {row.name}
               </TableCell>
               <TableCell align="right">{row.ticker}</TableCell>
-              <TableCell align="right">{row.price}</TableCell>
+              <TableCell style={{ width: 80 }} align="right">{row.price}</TableCell>
             </TableRow>
           ))}
         </TableBody>
