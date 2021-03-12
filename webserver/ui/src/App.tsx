@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDispatch } from 'react-redux';
 import './App.css';
 import { loadAsync } from './features/priceTable/priceSlice';
