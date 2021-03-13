@@ -2,7 +2,8 @@ use actix_web::{ Error, HttpResponse, Scope, get, post, web };
 use actix_web::error::{ ErrorBadRequest };
 use actix_web::http::StatusCode;
 use db::{ establish_connection, perform_transation };
-use db::holdings::{ ModStockHoldings, StockHolding};
+use db::holdings::{ ModStockHoldings, StockHolding };
+use db::transactions::{ ModTransaction, TransactionKind };
 use db::price::{ StockPrice };
 use serde::{ Deserialize, Serialize };
 
@@ -51,13 +52,18 @@ async fn create_holding(user_info: UserInfo, new_holding: web::Json<Holding>) ->
                     user.update_capital(user.capital - cost, &connection);
 
                     ModStockHoldings::update_quantity(&existing_holding, existing_holding.get_quantity() + new_holding.quantity, &connection);
+
+                    ModTransaction::record_transaction(&user, &new_holding.ticker, new_holding.quantity, TransactionKind::BuyStock, &connection);
                     Ok(())
                 }).unwrap();
             } else {
-                perform_transation::<ModStockHoldings, _>(&connection, || {
+                perform_transation::<(), _>(&connection, || {
                     user.update_capital(user.capital - cost, &connection);
     
-                    Ok(ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection))
+                    ModStockHoldings::create_new_holding(user, &new_holding.ticker, new_holding.quantity, &connection);
+
+                    ModTransaction::record_transaction(&user, &new_holding.ticker, new_holding.quantity, TransactionKind::BuyStock, &connection);
+                    Ok(())
                 }).unwrap();
             }
 
@@ -86,6 +92,8 @@ async fn sell_holding(user_info: UserInfo, holding: web::Json<Holding>) -> Resul
                     user.update_capital(user.capital + cost, &connection);
 
                     ModStockHoldings::update_quantity(&existing_holding, existing_holding.get_quantity() - holding.quantity, &connection);
+
+                    ModTransaction::record_transaction(&user, &holding.ticker, holding.quantity, TransactionKind::SellStock, &connection);
                     Ok(())
                 }).unwrap();
 
