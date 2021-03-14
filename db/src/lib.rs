@@ -1,4 +1,5 @@
 mod holdings_models;
+mod offers_models;
 mod stockprice_models;
 mod transactions_models;
 mod user_models;
@@ -6,6 +7,10 @@ mod schema;
 
 pub mod holdings {
     pub use crate::holdings_models::*;
+}
+
+pub mod offers {
+    pub use crate::offers_models::*;
 }
 
 pub mod price {
