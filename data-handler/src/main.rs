@@ -1,55 +1,50 @@
-use serde::{ Deserialize };
+mod fetch_prices;
 
-use db::{ establish_connection, NewStockPrice };
+use clap::Clap;
+use std::fmt;
 
-#[derive(Debug, Deserialize)]
-struct StockData {
-    data: StockTable,
+#[derive(Debug, Clone)]
+struct CliError {
+    reason: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct StockTable {
-    table: StockRows,
+impl fmt::Display for CliError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", &self.reason)
+    }
 }
 
-#[derive(Debug, Deserialize)]
-struct StockRows {
-    rows: Vec<Row>,
+#[derive(Clap, Debug)]
+#[clap(version = "0.1.0", author = "Ben F. <ben@fenwick.info>")]
+struct Opts {
+    #[clap(subcommand)]
+    task: SubCommand,
 }
 
-#[derive(Debug, Deserialize)]
-struct Row {
-    symbol: String,
-    name: String,
-    lastsale: String,
-    netchange: String,
-    pctchange: String,
-    #[serde(rename = "marketCap")]
-    market_cap: String,
-    url: String
+#[derive(Clap, Debug)]
+enum SubCommand {
+    FetchPrices(FetchPrices),
 }
+
+#[derive(Clap, Debug)]
+struct FetchPrices;
 
 #[tokio::main]
-async fn main() -> reqwest::Result<()> {
-    let body: StockData = reqwest::get("https://api.nasdaq.com/api/screener/stocks?limit=100&tableonly=true&exchange=NASDAQ")
-    .await?
-    .json()
-    .await?;
+async fn main() -> Result<(), CliError> {
+    let opts: Opts = Opts::parse();
 
-    let connection = establish_connection();
+    println!("{:?}", opts);
 
-    body.data.table.rows.into_iter().for_each(|record| {
-        let price: i32 = record.lastsale[1..].replace(&['$', '.'][..], "").parse().unwrap();
-
-        let new_stock_price = NewStockPrice{
-            name: &record.name,
-            symbol: &record.symbol,
-            price: price,
-        };
-
-        new_stock_price.insert_update(&connection);
-    
-    });
-
-    Ok(())
+    match opts.task {
+        SubCommand::FetchPrices(_) => {
+            match fetch_prices::fetch_prices().await {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    Err(CliError {
+                        reason: e.to_string()
+                    })
+                }
+            }
+        }
+    }
 }

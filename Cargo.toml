@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "data-retriever",
+    "data-handler",
     "db",
     "webserver"
 ]
