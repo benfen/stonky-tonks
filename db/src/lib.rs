@@ -1,10 +1,10 @@
 mod balance_models;
 mod holdings_models;
 mod offers_models;
+mod schema;
 mod stockprice_models;
 mod transactions_models;
 mod user_models;
-mod schema;
 
 pub mod balance {
     pub use crate::balance_models::*;
@@ -34,8 +34,8 @@ pub mod transactions {
 extern crate diesel;
 extern crate dotenv;
 
-use diesel::result::Error;
 use self::diesel::prelude::*;
+use diesel::result::Error;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
 use std::env;
@@ -43,13 +43,14 @@ use std::env;
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     SqliteConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
 }
 
 pub fn perform_transation<T, F>(connection: &SqliteConnection, f: F) -> Result<T, Error>
-        where F: FnOnce() -> Result<T, Error> {
+where
+    F: FnOnce() -> Result<T, Error>,
+{
     connection.transaction(f)
 }

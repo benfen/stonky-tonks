@@ -1,9 +1,9 @@
-use diesel::SqliteConnection;
 use diesel::prelude::*;
-use serde::{ Deserialize, Serialize };
+use diesel::SqliteConnection;
+use serde::{Deserialize, Serialize};
 
-use super::schema::stockprice::dsl::*;
 use super::schema::stockprice;
+use super::schema::stockprice::dsl::*;
 
 #[derive(Debug, Deserialize, Queryable, Serialize)]
 pub struct StockPrice {
@@ -13,7 +13,7 @@ pub struct StockPrice {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name="stockprice"]
+#[table_name = "stockprice"]
 pub struct NewStockPrice<'a> {
     pub name: &'a str,
     pub symbol: &'a str,
@@ -21,8 +21,12 @@ pub struct NewStockPrice<'a> {
 }
 
 impl StockPrice {
-    pub fn retrieve_price(connection: &SqliteConnection, search_symbol: &str) -> Option<StockPrice> {
-        stockprice::table.select((name, symbol, price))
+    pub fn retrieve_price(
+        connection: &SqliteConnection,
+        search_symbol: &str,
+    ) -> Option<StockPrice> {
+        stockprice::table
+            .select((name, symbol, price))
             .filter(symbol.eq(search_symbol))
             .first(connection)
             .optional()
@@ -30,14 +34,14 @@ impl StockPrice {
     }
 
     pub fn retrieve_all(connection: &SqliteConnection) -> Vec<StockPrice> {
-        stockprice::table.select((name, symbol, price))
+        stockprice::table
+            .select((name, symbol, price))
             .load(connection)
             .expect("Error loading stock prices")
     }
 }
 
 impl<'a> NewStockPrice<'a> {
-    
     pub fn insert(&self, connection: &SqliteConnection) {
         diesel::insert_into(stockprice::table)
             .values(self)
@@ -46,7 +50,8 @@ impl<'a> NewStockPrice<'a> {
     }
 
     pub fn insert_update(&self, connection: &SqliteConnection) {
-        let results = stockprice::table.filter(symbol.eq(self.symbol))
+        let results = stockprice::table
+            .filter(symbol.eq(self.symbol))
             .load::<StockPrice>(connection)
             .expect("Error loading stock prices");
 

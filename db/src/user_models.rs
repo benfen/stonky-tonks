@@ -1,13 +1,13 @@
-use diesel::SqliteConnection;
-use diesel::prelude::*;
-use serde::{ Deserialize, Serialize };
 use ::uuid::Uuid;
+use diesel::prelude::*;
+use diesel::SqliteConnection;
+use serde::{Deserialize, Serialize};
 
-use super::schema::user::dsl::*;
 use super::schema::user;
+use super::schema::user::dsl::*;
 
 #[derive(Debug, Deserialize, Identifiable, Insertable, Queryable, Serialize)]
-#[table_name="user"]
+#[table_name = "user"]
 pub struct User {
     pub name: String,
     pub capital: i64,
@@ -15,7 +15,7 @@ pub struct User {
 }
 
 #[derive(Debug, Insertable)]
-#[table_name="user"]
+#[table_name = "user"]
 pub struct NewUser<'a> {
     pub name: &'a str,
     pub capital: i64,
@@ -24,7 +24,8 @@ pub struct NewUser<'a> {
 
 impl User {
     pub fn retrieve_user(connection: &SqliteConnection, search_name: &str) -> Option<User> {
-        user::table.select((name, capital, id))
+        user::table
+            .select((name, capital, id))
             .filter(name.eq(search_name))
             .first(connection)
             .optional()
@@ -32,12 +33,13 @@ impl User {
     }
 
     pub fn retrieve_all_users(connection: &SqliteConnection) -> Vec<User> {
-        user::table.select((name, capital, id))
+        user::table
+            .select((name, capital, id))
             .load(connection)
             .expect("Error loading users from table")
     }
 
-    pub fn update_capital(&self, new_capital: i64,connection: &SqliteConnection) {
+    pub fn update_capital(&self, new_capital: i64, connection: &SqliteConnection) {
         diesel::update(self)
             .set(capital.eq(new_capital))
             .execute(connection)
@@ -45,14 +47,13 @@ impl User {
     }
 }
 
-impl <'a> NewUser<'a> {
-
+impl<'a> NewUser<'a> {
     pub fn insert_user(new_name: &str, new_capital: i64, connection: &SqliteConnection) -> String {
         let new_uuid = Uuid::new_v4().to_hyphenated().to_string();
         let new_user = NewUser {
             name: new_name,
             capital: new_capital,
-            id: &new_uuid
+            id: &new_uuid,
         };
 
         diesel::insert_into(user::table)
@@ -63,4 +64,3 @@ impl <'a> NewUser<'a> {
         new_uuid
     }
 }
-

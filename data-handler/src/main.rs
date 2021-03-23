@@ -36,15 +36,11 @@ async fn main() -> Result<(), CliError> {
     println!("{:?}", opts);
 
     match opts.task {
-        SubCommand::FetchPrices(_) => {
-            match fetch_prices::fetch_prices().await {
-                Ok(_) => Ok(()),
-                Err(e) => {
-                    Err(CliError {
-                        reason: e.to_string()
-                    })
-                }
-            }
-        }
+        SubCommand::FetchPrices(_) => match fetch_prices::fetch_prices().await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(CliError {
+                reason: e.to_string(),
+            }),
+        },
     }
 }

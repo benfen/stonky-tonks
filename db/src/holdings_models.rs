@@ -1,16 +1,16 @@
-use diesel::SqliteConnection;
 use diesel::prelude::*;
-use serde::{ Deserialize, Serialize };
+use diesel::SqliteConnection;
+use serde::{Deserialize, Serialize};
 
-use crate::user_models::User;
 use crate::stockprice_models::StockPrice;
+use crate::user_models::User;
 
 use super::schema::stockholdings;
 use super::schema::stockprice;
 
 #[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
-#[table_name="stockholdings"]
-#[belongs_to(User, foreign_key="userid")]
+#[table_name = "stockholdings"]
+#[belongs_to(User, foreign_key = "userid")]
 #[primary_key(userid, stockid)]
 pub struct StockHolding {
     pub userid: String,
@@ -19,7 +19,7 @@ pub struct StockHolding {
 }
 
 #[derive(Debug, Identifiable, Insertable)]
-#[table_name="stockholdings"]
+#[table_name = "stockholdings"]
 #[primary_key(userid, stockid)]
 pub struct ModStockHoldings<'a> {
     pub userid: &'a str,
@@ -34,19 +34,28 @@ impl StockHolding {
             .expect("Error loading holdings from table")
     }
 
-    pub fn retrieve_all_holdings_with_price(connection: &SqliteConnection, user: &User) -> Vec<(Self, StockPrice)> {
+    pub fn retrieve_all_holdings_with_price(
+        connection: &SqliteConnection,
+        user: &User,
+    ) -> Vec<(Self, StockPrice)> {
         use super::schema::stockholdings::dsl::userid;
 
-        stockholdings::table.inner_join(stockprice::table)
+        stockholdings::table
+            .inner_join(stockprice::table)
             .filter(userid.eq(&user.id))
             .load(connection)
             .expect("Error loading holdings from table")
     }
 
-    pub fn retrieve_holding(connection: &SqliteConnection, user: &User, ticker: &str) -> Option<Self> {
+    pub fn retrieve_holding(
+        connection: &SqliteConnection,
+        user: &User,
+        ticker: &str,
+    ) -> Option<Self> {
         use super::schema::stockholdings::dsl::stockholdings;
 
-        stockholdings.find((&user.id, ticker))
+        stockholdings
+            .find((&user.id, ticker))
             .first(connection)
             .optional()
             .expect("Error retrieving holding")
@@ -58,8 +67,12 @@ impl StockHolding {
 }
 
 impl<'a> ModStockHoldings<'a> {
-
-    pub fn create_new_holding(user: &'a User, ticker: &'a str, quantity: u32, connection: &SqliteConnection) -> ModStockHoldings<'a> {        
+    pub fn create_new_holding(
+        user: &'a User,
+        ticker: &'a str,
+        quantity: u32,
+        connection: &SqliteConnection,
+    ) -> ModStockHoldings<'a> {
         let new_holding = ModStockHoldings {
             userid: &user.id,
             stockid: ticker,
@@ -80,15 +93,18 @@ impl<'a> ModStockHoldings<'a> {
             .expect("Error deleting holding in db");
     }
 
-    pub fn update_quantity(holding: &StockHolding, new_quantity: u32, connection: &SqliteConnection) {
+    pub fn update_quantity(
+        holding: &StockHolding,
+        new_quantity: u32,
+        connection: &SqliteConnection,
+    ) {
         use super::schema::stockholdings::dsl::*;
 
         if new_quantity == 0 {
             ModStockHoldings::liquidate_holding(holding, connection);
         } else {
-            diesel::update(holding).set(
-                    quantity.eq(new_quantity as i32)
-                )
+            diesel::update(holding)
+                .set(quantity.eq(new_quantity as i32))
                 .execute(connection)
                 .expect("Error updating quantity for stock holding");
         }

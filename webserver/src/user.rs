@@ -1,16 +1,16 @@
-use actix_web::{Error, HttpResponse, FromRequest, HttpRequest, Scope, error, get, post, web };
-use actix_web::error::ErrorUnauthorized;
-use db::establish_connection;
-use db::user::{ User, NewUser };
-use serde::{ Serialize };
-use std::pin::Pin;
-use std::future::Future;
 use actix_web::dev::Payload;
+use actix_web::error::ErrorUnauthorized;
+use actix_web::{error, get, post, web, Error, FromRequest, HttpRequest, HttpResponse, Scope};
+use db::establish_connection;
+use db::user::{NewUser, User};
 use qstring::QString;
+use serde::Serialize;
+use std::future::Future;
+use std::pin::Pin;
 
 #[derive(Debug, Serialize)]
 pub struct UserInfo {
-    user: User
+    user: User,
 }
 
 impl UserInfo {
@@ -32,15 +32,9 @@ impl FromRequest for UserInfo {
         let user_option = User::retrieve_user(&connection, username);
 
         if let Some(user) = user_option {
-            Box::pin(async move {
-                Ok(UserInfo {
-                    user
-                })
-            })
+            Box::pin(async move { Ok(UserInfo { user }) })
         } else {
-            Box::pin(async move {
-                Err(ErrorUnauthorized("User required for request"))
-            })
+            Box::pin(async move { Err(ErrorUnauthorized("User required for request")) })
         }
     }
 }
@@ -63,9 +57,7 @@ async fn get_user(username: web::Path<String>) -> Result<HttpResponse, Error> {
 async fn get_users() -> Result<HttpResponse, Error> {
     let connection = establish_connection();
 
-    Ok(HttpResponse::Ok().json(
-        User::retrieve_all_users(&connection)
-    ))
+    Ok(HttpResponse::Ok().json(User::retrieve_all_users(&connection)))
 }
 
 #[post("/create/{username}")]

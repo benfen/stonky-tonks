@@ -1,7 +1,7 @@
-use serde::{ Deserialize };
+use serde::Deserialize;
 
-use db::{ establish_connection };
-use db::price::{ NewStockPrice };
+use db::establish_connection;
+use db::price::NewStockPrice;
 
 #[derive(Debug, Deserialize)]
 struct StockData {
@@ -27,11 +27,13 @@ struct Row {
     pctchange: String,
     #[serde(rename = "marketCap")]
     market_cap: String,
-    url: String
+    url: String,
 }
 
 pub async fn fetch_prices() -> reqwest::Result<()> {
-    let body: StockData = reqwest::get("https://api.nasdaq.com/api/screener/stocks?limit=100&tableonly=true&exchange=NASDAQ")
+    let body: StockData = reqwest::get(
+        "https://api.nasdaq.com/api/screener/stocks?limit=100&tableonly=true&exchange=NASDAQ",
+    )
     .await?
     .json()
     .await?;
@@ -39,16 +41,18 @@ pub async fn fetch_prices() -> reqwest::Result<()> {
     let connection = establish_connection();
 
     body.data.table.rows.into_iter().for_each(|record| {
-        let price: i32 = record.lastsale[1..].replace(&['$', '.'][..], "").parse().unwrap();
+        let price: i32 = record.lastsale[1..]
+            .replace(&['$', '.'][..], "")
+            .parse()
+            .unwrap();
 
-        let new_stock_price = NewStockPrice{
+        let new_stock_price = NewStockPrice {
             name: &record.name,
             symbol: &record.symbol,
             price: price,
         };
 
         new_stock_price.insert_update(&connection);
-    
     });
 
     Ok(())
