@@ -3,8 +3,10 @@ use diesel::prelude::*;
 use serde::{ Deserialize, Serialize };
 
 use crate::user_models::User;
+use crate::stockprice_models::StockPrice;
 
 use super::schema::stockholdings;
+use super::schema::stockprice;
 
 #[derive(Associations, Debug, Deserialize, Identifiable, Queryable, Serialize)]
 #[table_name="stockholdings"]
@@ -29,6 +31,15 @@ impl StockHolding {
     pub fn retrieve_all_holdings(connection: &SqliteConnection, user: &User) -> Vec<Self> {
         StockHolding::belonging_to(user)
             .load::<StockHolding>(connection)
+            .expect("Error loading holdings from table")
+    }
+
+    pub fn retrieve_all_holdings_with_price(connection: &SqliteConnection, user: &User) -> Vec<(Self, StockPrice)> {
+        use super::schema::stockholdings::dsl::userid;
+
+        stockholdings::table.inner_join(stockprice::table)
+            .filter(userid.eq(&user.id))
+            .load(connection)
             .expect("Error loading holdings from table")
     }
 

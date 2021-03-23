@@ -1,4 +1,13 @@
 table! {
+    balancehistory (id) {
+        id -> Text,
+        userid -> Text,
+        capital -> BigInt,
+        timestamp -> Timestamp,
+    }
+}
+
+table! {
     stockbuyoffers (id) {
         id -> Text,
         userid -> Text,
@@ -61,6 +70,7 @@ joinable!(stockselloffers -> stockprice (stockid));
 joinable!(transactions -> stockprice (stockid));
 
 allow_tables_to_appear_in_same_query!(
+    balancehistory,
     stockbuyoffers,
     stockholdings,
     stockprice,

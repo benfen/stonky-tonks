@@ -1,0 +1,8 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS balancehistory (
+    id VARCHAR(128) NOT NULL PRIMARY KEY,
+    userid VARCHAR(128) NOT NULL,
+    capital INTEGER NOT NULL DEFAULT 0,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(userid) REFERENCES user(uuid)
+);
