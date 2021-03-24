@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::holdings_models::StockHolding;
-use crate::stockprice_models::StockPrice;
 use crate::user_models::User;
 
 use super::schema::balancehistory;
