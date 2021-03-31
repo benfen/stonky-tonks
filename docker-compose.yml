@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  webserver:
+    build:
+      context: .
+      args:
+        PROJECT: webserver
+
+    entrypoint:
+    - sh
+    - -c
+    - |
+      db/setup-db.sh
+      exec /project/target/release/webserver
+
+    environment:
+      DATABASE_URL: /db/sql-db.db
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - db:/db
+
+volumes:
+  db: {}
